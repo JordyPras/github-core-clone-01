@@ -33,7 +33,7 @@ const RETRY_MAX_MS = 2_000;
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** The wait after `attempt` failed requests: exponential from RETRY_INITIAL_MS, capped. */
-function retryDelay(attempt: number): number {
+function backoffDelay(attempt: number): number {
   return Math.min(RETRY_MAX_MS, RETRY_INITIAL_MS * 2 ** Math.min(attempt, 8));
 }
 
@@ -56,7 +56,7 @@ async function register(port: number): Promise<void> {
     } catch (err) {
       if (err instanceof Error && err.message.startsWith('register answered HTTP ')) throw err;
     }
-    await sleep(retryDelay(attempt));
+    await sleep(backoffDelay(attempt));
   }
 }
 
@@ -72,7 +72,7 @@ async function waitForDone(): Promise<void> {
     } catch {
       // The env is not answering yet, or the poll timed out: it is not done, so poll again.
     }
-    await sleep(retryDelay(attempt));
+    await sleep(backoffDelay(attempt));
   }
 }
 
